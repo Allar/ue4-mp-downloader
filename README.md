@@ -19,19 +19,8 @@ Everything here is offered as-is. If bad things happen, including but not limite
 
 # Installation
 
-## NodeJS required
-
-Install NodeJS for your operating system, instructions here:
-https://nodejs.org/en/download/package-manager/
-
-## Using NPM
-
-Once you installed NodeJS, you should have a command-line tool called 'npm' working.
-
-Run the following:
-`npm install -g Allar/ue4-mp-downloader`
-
-This will download this repo you're looking at now and install it as a global node module.
+1. Install NodeJS if you don't already have it installed: https://nodejs.org/en/download/package-manager/
+1. `npm install -g Allar/ue4-mp-downloader`
 
 # Usage
 
