@@ -1,12 +1,13 @@
 "use strict";
-// UE4-MARKETPLACE-COMMANDLINE
+// UE4-MP-DOWNLOADER
 //
 // This is a very hastly written commandline app so I can fetch marketplace items on Linux
 // Warning: Here be dragons
 
 
-// Normally don't need to do this global bullshit but this library is used in another JS app that requires it
-// So instead of maintaining two copies of this api, we just re-use it like this
+// Normally don't need to do this global bullshit but 'epic_api.js' is used in another JS app that requires it
+// So instead of maintaining two copies of this api, we'll just re-use it like this
+// @TODO: Learn how to do all this the right way
 global.request = (global.request === undefined) ? require('request') : global.request;
 global.request = request.defaults({followRedirect: false, followAllRedirects: false});
 global.epic_api = (global.epic_api === undefined) ? require('./epic_api.js') : global.epic_api;
@@ -15,6 +16,7 @@ const prompt = require('prompt');
 const cheerio = require('cheerio');
 const menu = require('console-menu');
 
+// Takes an HTML form from cheerio.serializeArray() and converts it to an object suitable for the 'request' module
 function SerializeLoginFormArray(form) {
 	var result = {};
 	form.forEach((element) => {
@@ -23,6 +25,7 @@ function SerializeLoginFormArray(form) {
 	return result;
 }
 
+// Ask for username/password from the user
 var promptSchema = {
 	properties: {
 		username: {
@@ -72,6 +75,7 @@ function OnLogin(status, complete) {
 
 	// If for some reason the login chain fails but doesn't complete, theres no error handling
 	// The log above *should* log the login chain failure and execution *should* just stop.
+	// Theres a lot of assumptions being made because my test sample count is 1.
 	if (complete == true) {
 		epic_api.GetOwnedAssets( (success) => {
 			var items = [];
@@ -103,6 +107,7 @@ function OnLogin(status, complete) {
 	};
 }
 
+// The real meat of the program. Once items are fetched, this will handle any downloads
 function ShowDownloadAssetsMenu(items, cb) {
 	console.log('\x1Bc'); // clear screen
 
