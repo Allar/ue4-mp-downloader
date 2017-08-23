@@ -27,3 +27,11 @@ Everything here is offered as-is. If bad things happen, including but not limite
 Run `ue4-mp-downloader`
 
 You will be prompted to log in. This tool does not save or record your credentials for your safety, so you will have to log in every time you use it. Once logged in, any assets downloaded will be downloaded to your current working directory in a folder called `download`.
+
+# Testing
+
+Tested and confirmed working on Windows 8 and 10 running both NodeJS v6 and v8. Tested and confirmed working on Ubuntu 16 with Node v8.
+
+# Known Issues
+
+If your machine doesn't have as much free ram as the asset you are downloading, you will get weird errors doing the download and extract process. My algorithim has no need to keep it all in memory, yet it still does. If anyone knows why my javascript download and extract process isn't freeing up memory after every asset file extract, please let me know, or even better, submit a fix!
