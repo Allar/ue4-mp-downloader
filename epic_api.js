@@ -376,7 +376,6 @@ epic_api.prototype.getAllMarketplaceAssets = function(cb_done) {
 			}
 		});
 	}		
-
 }
 
 epic_api.prototype.GetOwnedAssets = function (cb) {
@@ -679,6 +678,9 @@ epic_api.prototype.ExtractAssetFilesFromChunks = function (manifest, chunkDir, d
 			fs.writeFileSync(chunkDir + chunkFileName, chunkBuffer);
 		}
 
+		headerBuffer = null;
+		chunkBuffer = null;
+
 		bar.tick();
 	});
 
@@ -712,6 +714,7 @@ epic_api.prototype.ExtractAssetFilesFromChunks = function (manifest, chunkDir, d
 
 		// Write out the assembled buffer
 		fs.writeFileSync(fileName, buffer);
+		buffer = null;
 		bar.tick();
 	});
 
