@@ -24,10 +24,6 @@ Everything here is offered as-is. If bad things happen, including but not limite
 
 # Usage
 
-Once installed as a global node module, you can run the following from any directory:
+Run `ue4-mp-downloader`
 
-`ue4-mp-downloader`
-
-You will be prompted to log in. This tool does not save or record your credentials for your safety, so you will have to log in every time you use it.
-
-Once logged in, any assets downloaded will be downloaded to your current working directory in a folder called `download`.
+You will be prompted to log in. This tool does not save or record your credentials for your safety, so you will have to log in every time you use it. Once logged in, any assets downloaded will be downloaded to your current working directory in a folder called `download`.
