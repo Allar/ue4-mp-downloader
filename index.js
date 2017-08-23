@@ -106,7 +106,7 @@ function OnLogin(status, complete) {
 function ShowDownloadAssetsMenu(items, cb) {
 	console.log('\x1Bc'); // clear screen
 
-	var helpMessage = "Scroll using Up/Down, arrow keys, or Page Up / Page Down. Press Control+C to quit.";
+	var helpMessage = "Scroll using Up/Down, arrow keys, or Page Up / Page Down. Press CTRL+C to quit.";
 	
 	menu(items, { header: 'Select a Marketplace Asset to Download', pageSize: 10, border: true, helpMessage: helpMessage})
 	.then( (item) => {
