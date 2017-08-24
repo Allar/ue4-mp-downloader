@@ -477,6 +477,9 @@ epic_api.prototype.GetConsolidatedAssetInfo = function (catalogItemId, cb) {
 epic_api.prototype.GetEngineVersionsForItem = function (itemInfo) {
 	var versions = [];
 	itemInfo.releaseInfo.forEach( (releaseInfo) => {
+		if (!releaseInfo.hasOwnProperty("compatibleApps")) {
+			return versions;
+		}
 		releaseInfo.compatibleApps.forEach( (compatibleApp) => {
 			var minorVersion = Number(compatibleApp.replace("UE_4.", ""));
 			versions.push({title: `4.${minorVersion}`, appId: releaseInfo.appId, version: compatibleApp, minorVersion: minorVersion });
