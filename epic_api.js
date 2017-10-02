@@ -94,7 +94,7 @@ epic_api.prototype.WebAuthorize = function (user, pass, cb_status) {
 	request.get(opts, function(error, response, body) {
 		global.epic_api.updateFakeJar(response.headers['set-cookie']);
 		
-		if (response.statusCode == 200 && response.headers['access-control-expose-headers'] == 'X-EPIC-LOGIN-COMPLETE-REDIRECT') {
+		if (response.statusCode == 200) {
 			var json = JSON.parse(body);
 			var code = json.redirectURL.split('?code=')[1];
 			if (cb_status != undefined) {
@@ -623,7 +623,7 @@ epic_api.prototype.DownloadItemChunkList = function (manifest, chunkList, downlo
 	var bar = new ProgressBar('Progress: (:current / :totalMB) :bar :percent Completed. (ETA: :eta seconds)', {total: chunkList.length});
 	var downloadList = downloads; // really stupid code
 	downloadList.forEach( (downloadItem) => {
-		download(downloadItem, { directory: downloadDir }, (err) => {
+		download(downloadItem, { directory: downloadDir, timeout: 50000 }, (err) => {
 			if (err) throw err;
 			bar.tick();
 			downloads.pop();
