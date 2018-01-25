@@ -534,12 +534,11 @@ epic_api.prototype.GetItemBuildInfo = function (catalogItemId, appId, cb) {
 }
 
 // Gets an item's manifest. Callback is of form (error, manifest)
-// Note: This call does not require auth. (lol?)
+// Note: This call does not require auth. (lol?) E: It now does by needing the signature.
 epic_api.prototype.GetItemManifest = function (itemBuildInfo, cb) {
 	var opts = {
-		uri: itemBuildInfo.items.MANIFEST.distribution + itemBuildInfo.items.MANIFEST.path,
+		uri: itemBuildInfo.items.MANIFEST.distribution + itemBuildInfo.items.MANIFEST.path + "?" + itemBuildInfo.items.MANIFEST.signature,
 		headers: { Origin: 'allar_ue4_marketplace_commandline', 'User-Agent': 'game=UELauncher, engine=UE4, build=allar_ue4_marketplace_commandline' },
-		qs: { label: 'Live' },
 	};
 
 	console.log("Getting item manifest.");
