@@ -589,11 +589,12 @@ function padLeft(nr, n, str){
 	return Array(n-String(nr).length+1).join(str||'0')+nr;
 }
 
-epic_api.prototype.BuildItemChunkListFromManifest = function (manifest) {
+epic_api.prototype.BuildItemChunkListFromManifest = function (buildinfo, manifest) {
 	// Build chunk URL list
 	var chunks = [];
 	//Ref: https://download.epicgames.com/Builds/Rocket/Automated/MagicEffects411/CloudDir/ChunksV3/22/AAC7EF867364B218_CE3BE4D54E7B4ECE663C8EAC2D8929D6.chunk
-	var chunkBaseURL = `http://download.epicgames.com/Builds/Rocket/Automated/${manifest.AppNameString}/CloudDir/ChunksV3/`;
+	var chunk_path = buildinfo.items.CHUNKS['path'];
+	var chunkBaseURL = buildinfo.items.CHUNKS['distribution'] + chunk_path.substring(0, chunk_path.lastIndexOf('/')) + "/ChunksV3/";
 	for ( var chunk in manifest.ChunkHashList )
 	{
 		var hash = ChunkHashToReverseHexEncoding(manifest.ChunkHashList[chunk]);
