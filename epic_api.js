@@ -3,10 +3,12 @@ var epic_api = function () {};
 
 const rimraf = require('rimraf');
 const mkdirp = require('mkdirp');
-const download = require('download-file');
+//const download = require('download-file');
 const ProgressBar = require('progress');
 const zlib = require('zlib');
 const fs = require('fs');
+const http = require('http');
+const URL = require('url');
 
 var slowRequestPool = {maxSockets: 2};
 
@@ -537,9 +539,9 @@ epic_api.prototype.GetItemBuildInfo = function (catalogItemId, appId, cb) {
 // Note: This call does not require auth. (lol?)
 epic_api.prototype.GetItemManifest = function (itemBuildInfo, cb) {
 	var opts = {
-		uri: itemBuildInfo.items.MANIFEST.distribution + itemBuildInfo.items.MANIFEST.path,
+        uri: itemBuildInfo.items.MANIFEST.distribution + itemBuildInfo.items.MANIFEST.path + "?" + itemBuildInfo.items.MANIFEST.signature,
 		headers: { Origin: 'allar_ue4_marketplace_commandline', 'User-Agent': 'game=UELauncher, engine=UE4, build=allar_ue4_marketplace_commandline' },
-		qs: { label: 'Live' },
+		//qs: { label: 'Live' },
 	};
 
 	console.log("Getting item manifest.");
@@ -605,6 +607,27 @@ epic_api.prototype.BuildItemChunkListFromManifest = function (manifest) {
 	return chunks;
 }
 
+// Thanks to https://stackoverflow.com/a/22907134/4830897
+var download = function(url, dest, cb, retry) {
+    var file = fs.createWriteStream(dest);
+    var request = http.get(url, function(response) {
+        response.pipe(file);
+        file.on('finish', function() {
+            file.close(cb);  // close() is async, call cb after close completes.
+        });
+    }).on('error', function(err) { // Handle errors
+        fs.unlink(dest); // Delete the file async. (But we don't check the result)
+        if((+retry) > 0){
+            console.log("Retry to download: " + url);
+            download(url, dest, cb, retry - 1);
+            return;
+        }
+        if (cb) cb(err.message);
+    }).setTimeout(60000, function() { // Give it some time. Sometimes it is just slow.
+        request.abort();
+    });
+};
+
 // cb is in format (finished, chunkDir)
 epic_api.prototype.DownloadItemChunkList = function (manifest, chunkList, downloadDirBase, cb) {
 	var downloadDir = `${downloadDirBase}${manifest.AppNameString}/chunks/`;
@@ -617,21 +640,27 @@ epic_api.prototype.DownloadItemChunkList = function (manifest, chunkList, downlo
 		downloads.push(chunk.url);
 	});
 
-	console.log("Downloading item chunks.");
+    console.log("Downloading item chunks.");
 
 	// Perform downloads
-	var bar = new ProgressBar('Progress: (:current / :totalMB) :bar :percent Completed. (ETA: :eta seconds)', {total: chunkList.length});
+	var bar = new ProgressBar('Progress: (:current / :total files) :bar :percent Completed. (ETA: :eta seconds)', {total: chunkList.length});
 	var downloadList = downloads; // really stupid code
-	downloadList.forEach( (downloadItem) => {
-		download(downloadItem, { directory: downloadDir, timeout: 50000 }, (err) => {
-			if (err) throw err;
+    function _download(){
+        var downloadItem = downloadList.pop();
+		download(downloadItem, downloadDir + downloadItem.split('/').pop(), function(err){
+			if (err){
+                console.log("Download error", err);
+                throw err;
+            }
 			bar.tick();
-			downloads.pop();
 			if (downloads.length == 0 && cb != undefined) {
 				cb(true, downloadDir);
-			}
-		});
-	}); 
+			}else{
+                _download();
+            }
+		}, 3);
+    }
+    _download();
 }
 
 // cb is in format (finished)
