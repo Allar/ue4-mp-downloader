@@ -3,12 +3,13 @@ var epic_api = function () {};
 
 const rimraf = require('rimraf');
 const mkdirp = require('mkdirp');
-const download = require('download-file');
 const ProgressBar = require('progress');
 const zlib = require('zlib');
 const fs = require('fs');
+var url = require('url')
 
 var slowRequestPool = {maxSockets: 2};
+var downloadPool = { maxSockets: 10 };
 
 global.marketplace = {};
 global.marketplace_ajax = {};
@@ -534,12 +535,11 @@ epic_api.prototype.GetItemBuildInfo = function (catalogItemId, appId, cb) {
 }
 
 // Gets an item's manifest. Callback is of form (error, manifest)
-// Note: This call does not require auth. (lol?)
+// Note: This call does not require auth. (lol?) E: It now does by needing the signature.
 epic_api.prototype.GetItemManifest = function (itemBuildInfo, cb) {
 	var opts = {
-		uri: itemBuildInfo.items.MANIFEST.distribution + itemBuildInfo.items.MANIFEST.path,
+		uri: itemBuildInfo.items.MANIFEST.distribution + itemBuildInfo.items.MANIFEST.path + "?" + itemBuildInfo.items.MANIFEST.signature,
 		headers: { Origin: 'allar_ue4_marketplace_commandline', 'User-Agent': 'game=UELauncher, engine=UE4, build=allar_ue4_marketplace_commandline' },
-		qs: { label: 'Live' },
 	};
 
 	console.log("Getting item manifest.");
@@ -590,11 +590,63 @@ function padLeft(nr, n, str){
 	return Array(n-String(nr).length+1).join(str||'0')+nr;
 }
 
-epic_api.prototype.BuildItemChunkListFromManifest = function (manifest) {
+function download(file, options, callback) {
+    if (!file) throw("Need a file url to download")
+
+    if (!callback && typeof options === 'function') {
+        callback = options
+    }
+
+    options = typeof options === 'object' ? options : {}
+    options.timeout = options.timeout || 20000
+    options.directory = options.directory ? options.directory : '.'
+    options.retries = options.retries || 3;
+
+    var uri = file.split('/')
+    options.filename = options.filename || uri[uri.length - 1]
+
+    var path = options.directory + "/" + options.filename
+    mkdirp(options.directory, function(err) { 
+        if (err) throw err
+        var file_out = fs.createWriteStream(path);
+        var url_options = {
+            uri: file,
+            pool:  downloadPool,
+            timeout: 60000,
+			headers: { 'User-Agent': 'game=UELauncher, engine=UE4, build=allar_ue4_marketplace_commandline' },
+        };
+        request.get(url_options).on('response', function(response) {
+            if (response.statusCode === 200) {
+                response.pipe(file_out);
+                file_out.on('finish', function() {
+                    file_out.close(function(){
+                        if (callback) 
+                            callback(false, path)
+                    });
+                });
+            }
+            else{
+                if (callback) callback(response.statusCode)
+            }
+        }).on('error', function(err) { // Handle errors
+            if(options.retries > 0){
+                options.retries -= 1;
+                console.log("Retry to download: " + url_options.uri + ". Remaining: " + options.retries);
+                download(file, options, callback);
+                return;
+            }
+            fs.unlink(path);
+            if (cb) cb(err.message);
+        });
+    });
+};
+
+epic_api.prototype.BuildItemChunkListFromManifest = function (buildinfo, manifest) {
 	// Build chunk URL list
 	var chunks = [];
 	//Ref: https://download.epicgames.com/Builds/Rocket/Automated/MagicEffects411/CloudDir/ChunksV3/22/AAC7EF867364B218_CE3BE4D54E7B4ECE663C8EAC2D8929D6.chunk
-	var chunkBaseURL = `http://download.epicgames.com/Builds/Rocket/Automated/${manifest.AppNameString}/CloudDir/ChunksV3/`;
+	var chunk_path = buildinfo.items.CHUNKS['path'];
+	var chunkBaseURL = buildinfo.items.CHUNKS['distribution'] + chunk_path.substring(0, chunk_path.lastIndexOf('/')) + "/ChunksV3/";
 	for ( var chunk in manifest.ChunkHashList )
 	{
 		var hash = ChunkHashToReverseHexEncoding(manifest.ChunkHashList[chunk]);
@@ -620,7 +672,7 @@ epic_api.prototype.DownloadItemChunkList = function (manifest, chunkList, downlo
 	console.log("Downloading item chunks.");
 
 	// Perform downloads
-	var bar = new ProgressBar('Progress: (:current / :totalMB) :bar :percent Completed. (ETA: :eta seconds)', {total: chunkList.length});
+	var bar = new ProgressBar('Progress: (:current / :total) :bar :percent Completed. (ETA: :eta seconds)', {total: chunkList.length});
 	var downloadList = downloads; // really stupid code
 	downloadList.forEach( (downloadItem) => {
 		download(downloadItem, { directory: downloadDir, timeout: 50000 }, (err) => {
