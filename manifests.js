@@ -15,6 +15,7 @@ const menu = require('console-menu');
 const fs = require('fs');
 const path = require('path');
 const mkdirp = require('mkdirp');
+const dotenv = require('dotenv').config();
 
 // Takes an HTML form from cheerio.serializeArray() and converts it to an object suitable for the 'request' module
 function SerializeLoginFormArray(form) {
@@ -30,13 +31,15 @@ var promptSchema = {
 	properties: {
 		username: {
 			required: true,
-			type: 'string'
+			type: 'string',
+			default: process.env.UE4_ACCOUNT
 		},
 		password: {
 			required: true,
 			type:'string',
 			hidden: true,
-			replace: '*'
+			replace: '*',
+			default: process.env.UE4_PASSWORD
 		}
 	}
 };
