@@ -80,7 +80,7 @@ function OnLogin(status, complete) {
 		epic_api.GetOwnedAssets( (success) => {
 			var items = [];
 			Object.keys(global.marketplace_ownedAssets_consolidated).forEach( (key) => {
-				if (global.marketplace_ownedAssets_consolidated[key].developer == "Epic Games") // Epic examples returning 403?
+				if (global.marketplace_ownedAssets_consolidated[key].assetId == "UE") // Skip the editor itself
 					return;
 
 				var isAsset = global.marketplace_ownedAssets_consolidated[key].categories.find ( (cat) => {
@@ -138,7 +138,7 @@ function ShowDownloadAssetsMenu(items, cb) {
 						console.error('Failed to get item manifest. ' + error);
 						return;
 					}
-					var chunkList = global.epic_api.BuildItemChunkListFromManifest(manifest);
+					var chunkList = global.epic_api.BuildItemChunkListFromManifest(buildinfo, manifest);
 					global.epic_api.DownloadItemChunkList(manifest, chunkList, "./download/", (finishedDownloading, chunkDir) => {
 						if (finishedDownloading) {
 							global.epic_api.ExtractAssetFilesFromChunks(manifest, chunkDir, "./download/", (finishedExtracting) => {

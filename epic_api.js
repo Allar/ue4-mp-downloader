@@ -606,7 +606,8 @@ function download(file, options, callback) {
     options.filename = options.filename || uri[uri.length - 1]
 
     var path = options.directory + "/" + options.filename
-    mkdirp(options.directory, function(err) {
+
+    mkdirp(options.directory, function(err) { 
         if (err) throw err
         var file_out = fs.createWriteStream(path);
         var url_options = {
@@ -620,7 +621,7 @@ function download(file, options, callback) {
                 response.pipe(file_out);
                 file_out.on('finish', function() {
                     file_out.close(function(){
-                        if (callback)
+                        if (callback) 
                             callback(false, path)
                     });
                 });
